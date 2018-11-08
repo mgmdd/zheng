@@ -4,6 +4,7 @@ import com.zheng.common.annotation.BaseService;
 import com.zheng.common.base.BaseInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
@@ -21,11 +22,12 @@ public class ApplicationContextListener implements ApplicationListener<ContextRe
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         // root application context
-        if(null == contextRefreshedEvent.getApplicationContext().getParent()) {
+        ApplicationContext applicationContext = contextRefreshedEvent.getApplicationContext();
+        if (null != applicationContext && null == applicationContext.getParent()) {
             LOGGER.debug(">>>>> spring初始化完毕 <<<<<");
             // spring初始化完毕后，通过反射调用所有使用BaseService注解的initMapper方法
-            Map<String, Object> baseServices = contextRefreshedEvent.getApplicationContext().getBeansWithAnnotation(BaseService.class);
-            for(Object service : baseServices.values()) {
+            Map<String, Object> baseServices = applicationContext.getBeansWithAnnotation(BaseService.class);
+            for (Object service : baseServices.values()) {
                 LOGGER.debug(">>>>> {}.initMapper()", service.getClass().getName());
                 try {
                     Method initMapper = service.getClass().getMethod("initMapper");
@@ -37,8 +39,8 @@ public class ApplicationContextListener implements ApplicationListener<ContextRe
             }
 
             // 系统入口初始化
-            Map<String, BaseInterface> baseInterfaceBeans = contextRefreshedEvent.getApplicationContext().getBeansOfType(BaseInterface.class);
-            for(Object service : baseInterfaceBeans.values()) {
+            Map<String, BaseInterface> baseInterfaceBeans = applicationContext.getBeansOfType(BaseInterface.class);
+            for (Object service : baseInterfaceBeans.values()) {
                 LOGGER.debug(">>>>> {}.init()", service.getClass().getName());
                 try {
                     Method init = service.getClass().getMethod("init");
